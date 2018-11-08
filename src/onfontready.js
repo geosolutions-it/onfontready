@@ -12,24 +12,27 @@
 //                            generic family font
 // * root                 : Undefined variable used by function
 // * tryFinish            : Undefined variable used by function
-module.exports = (fontName, onReady, options, root, tryFinish) => {
+module.exports = (fontNameNew, onReady, options = {}, rootNew, tryFinishNew) => {
+    let fontName = fontNameNew;
+    let root = rootNew;
+    let tryFinish = tryFinishNew;
     // root and tryFinish parameters prevent the need for var statement
-
+    let fontNameCopy = fontName;
     if (process.env.isTest) {
         // Store a copy because later code will reuse the fontName variable
         // Use var to pull it out of the if block's scope
-        var fontNameCopy = fontName;
 
         const tests = {};
 
         const tryCreate = (name) => {
-            return tests[name] = tests[name] || {
+            tests[name] = tests[name] || {
                 rootCount: 0,
                 iframesCreated: false,
                 timedOut: false,
                 fontLoaded: false,
-                requiredExtraTimeout: false,
+                requiredExtraTimeout: false
             };
+            return tests[name];
         };
 
         // A helper function tracks info about internal processes for testing
@@ -51,12 +54,11 @@ module.exports = (fontName, onReady, options, root, tryFinish) => {
             },
             getTests() {
                 return tests;
-            },
+            }
         };
     }
 
     // Ensure options is defined to prevent access errors
-    options = options || 0;
 
     // A 0 timeoutAfter will prevent the timeout functionality
     if (options.timeoutAfter) {
@@ -95,7 +97,7 @@ module.exports = (fontName, onReady, options, root, tryFinish) => {
         // clientWidth only measures to integer accuracy
         //   This is sufficient for such large font sizes (999px)
         // Both compared values are integers, so double equality is sufficient
-        if (root && root.firstChild.clientWidth == root.lastChild.clientWidth) {
+        if (root && root.firstChild.clientWidth === root.lastChild.clientWidth) {
             if (process.env.isTest) {
                 window.reporter.modifyRootCount(fontNameCopy, -1);
             }
@@ -125,30 +127,30 @@ module.exports = (fontName, onReady, options, root, tryFinish) => {
             // Save bytes by creating and assigning the root div inside call
             // appendChild returns the root, allowing innerHTML usage inline
             document.body.appendChild(root = document.createElement('div')).innerHTML =
-                // position:fixed breaks the element out of page flow
-                //   Being out of flow makes the div size to the text
-                // white-space:pre ensures no text wrapping will occur
-                // Out of bounds percentage bottom/right prevents scrollbars
-                // font combines font-size and font-family
-                // Font size 999px differentiates fallback fonts
-                // Using font size in pixels prevents possible
-                //   failure due to zero-sized default page fonts
-                // Using a <pre> instead of a <div> tag might be smaller, but
-                //   it is more likely to interfere with page styles
-                '<div style="position:fixed;white-space:pre;bottom:999%;right:999%;font:999px ' +
-                    // Generic fonts should be quote-less
-                    (options.generic ? '' : "'") + fontName + (options.generic ? '' : "'") +
-                // Fallback font sizes text differently from
-                //   the adjacent div until the font has loaded
-                ',serif">' +
-                    // A single space is the text default
-                    (options.sampleText || ' ') +
-                '</div>' +
-                '<div style="position:fixed;white-space:pre;bottom:999%;right:999%;font:999px ' +
-                    (options.generic ? '' : "'") + fontName + (options.generic ? '' : "'") +
-                ',monospace">' +
-                    (options.sampleText || ' ') +
-                '</div>'
+            // position:fixed breaks the element out of page flow
+            //   Being out of flow makes the div size to the text
+            // white-space:pre ensures no text wrapping will occur
+            // Out of bounds percentage bottom/right prevents scrollbars
+            // font combines font-size and font-family
+            // Font size 999px differentiates fallback fonts
+            // Using font size in pixels prevents possible
+            //   failure due to zero-sized default page fonts
+            // Using a <pre> instead of a <div> tag might be smaller, but
+            //   it is more likely to interfere with page styles
+            '<div style="position:fixed;white-space:pre;bottom:999%;right:999%;font:999px ' +
+                // Generic fonts should be quote-less
+                (options.generic ? '' : "'") + fontName + (options.generic ? '' : "'") +
+            // Fallback font sizes text differently from
+            //   the adjacent div until the font has loaded
+            ',serif">' +
+                // A single space is the text default
+                (options.sampleText || ' ') +
+            '</div>' +
+            '<div style="position:fixed;white-space:pre;bottom:999%;right:999%;font:999px ' +
+                (options.generic ? '' : "'") + fontName + (options.generic ? '' : "'") +
+            ',monospace">' +
+                (options.sampleText || ' ') +
+            '</div>'
         );
     }
 
@@ -217,8 +219,7 @@ module.exports = (fontName, onReady, options, root, tryFinish) => {
 
     // If the font is already loaded, tryFinish will have already destroyed
     //   the root reference, so the iframes will never be inserted
-    if (root)
-    {
+    if (root) {
         if (process.env.isTest) {
             window.reporter.iframesCreated(fontNameCopy);
         }
@@ -267,8 +268,7 @@ module.exports = (fontName, onReady, options, root, tryFinish) => {
             //   to be attached via attachEvent
             if (fontName.attachEvent) {
                 fontName.contentWindow.attachEvent('onresize', tryFinish);
-            }
-            else {
+            } else {
                 fontName.contentWindow.onresize = tryFinish;
             }
 
@@ -280,8 +280,7 @@ module.exports = (fontName, onReady, options, root, tryFinish) => {
 
             if (fontName.attachEvent) {
                 fontName.contentWindow.attachEvent('onresize', tryFinish);
-            }
-            else {
+            } else {
                 fontName.contentWindow.onresize = tryFinish;
             }
         }
@@ -299,12 +298,10 @@ module.exports = (fontName, onReady, options, root, tryFinish) => {
             fontName = setTimeout(tryFinish);
         }
 
-        if (process.env.isTest)
-        {
+        if (process.env.isTest) {
             // When testing, report that this timeout was used
-            fontName = setTimeout(function () {
-                if (root)
-                {
+            fontName = setTimeout(function() {
+                if (root) {
                     window.reporter.requiredExtraTimeout(fontNameCopy);
                     tryFinish();
                 }
